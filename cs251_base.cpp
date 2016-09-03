@@ -22,6 +22,7 @@
 #include "GL/glui.h"
 
 #include <cstdio>
+#include <cstdlib>
 #include <iostream>
 using namespace std;
 using namespace cs251;
@@ -30,6 +31,7 @@ using namespace cs251;
 #define toggle
   int f1toggler = -1;
   int f2toggler = -1;
+  // bool restart = false;
 #endif
 
 extern b2Vec2 clickPoint;
@@ -264,41 +266,41 @@ void base_sim_t::step(settings_t* settings)
     }
       b2Body* lister = m_world->GetBodyList();
 
-      // cout << m_world->GetBodyCount() << endl;
-      b2Body *mag1, *mag2, *metal;
-      int i=0;
-      while(lister != NULL){
+      b2Body *mag1, *mag2, *metal, *paddle;
 
-        if(i==0) mag2 = lister;
-        if(i==1) mag1 = lister;
-        if(i==2) metal = lister;
+      // cout << children << endl;
+      int children = m_world->GetBodyCount()-6;
 
+      for (int i = 0; i < 3 + children; ++i)
+      {
+        if(i==children+0) mag2 = lister;
+        if(i==children+1) mag1 = lister;
+        if(i==children+2) paddle = lister;
+        // if(i==children+4) boundary = lister;
         lister = lister->GetNext();
-        i++;
       }
 
       b2Vec2 mag1Cen = mag1->GetWorldCenter();
       b2Vec2 mag2Cen = mag2->GetWorldCenter();
-      b2Vec2 metCen = metal->GetWorldCenter();
 
-      // cout << mag2 << endl; 
-      b2Vec2 force1 = f1toggler*(250.0f/(metCen-mag1Cen).LengthSquared()*(metCen-mag1Cen).Length())*(metCen-mag1Cen);
-      b2Vec2 force2 = f2toggler*(250.0f/(metCen-mag2Cen).LengthSquared()*(metCen-mag2Cen).Length())*(metCen-mag2Cen);
-      metal->ApplyForceToCenter(force1+force2,true);
-
-      callbacks_t calls;
-
-      glutMouseFunc(calls.mouse_cb);
-      glutKeyboardFunc(calls.keyboard_cb);
+      metal = m_world->GetBodyList();
+      
+      for(int i = 0; i < children and metal != NULL; i++){ 
+      // while(metal!=NULL){
+        b2Vec2 metCen = metal->GetWorldCenter();
+  
+        b2Vec2 force1 = f1toggler*(75.0f/(metCen-mag1Cen).LengthSquared()*(metCen-mag1Cen).Length())*(metCen-mag1Cen);
+        b2Vec2 force2 = f2toggler*(75.0f/(metCen-mag2Cen).LengthSquared()*(metCen-mag2Cen).Length())*(metCen-mag2Cen);
+        metal->ApplyForceToCenter(force1+force2,true);
+        metal = metal->GetNext();
+      }
 
       if(clicked == true){
-        // cout << clickPoint.x << " " << clickPoint.y << " " << mag1Cen.x << " " << mag1Cen.y << endl;
-        // b2Vec2 clickPoint(xclick,yclick);
+
+        // cout << clickPoint.x << " " << clickPoint.y << endl;
 
         if( mag1->GetFixtureList()->TestPoint(clickPoint) ) f1toggler = -1*f1toggler;
         if( mag2->GetFixtureList()->TestPoint(clickPoint) ) f2toggler = -1*f2toggler;
-
-        // cout << f1toggler << " " << f2toggler << endl;
 
         clicked = false;
       }
@@ -311,8 +313,48 @@ void base_sim_t::step(settings_t* settings)
         if(keyP == 't'){
           f1toggler = -1*f1toggler; f2toggler = -1*f2toggler;
         }
+        if(keyP == 'f' and paddle->GetWorldCenter().x < +39){
+          paddle->SetTransform(paddle->GetWorldCenter() + b2Vec2(1.5f,0),paddle->GetAngle());
+        }
+        if(keyP == 'd' and paddle->GetWorldCenter().x > -39){
+          paddle->SetTransform(paddle->GetWorldCenter() - b2Vec2(1.5f,0),paddle->GetAngle());
+        }
+
+        // cout << keyP << endl;
 
         pressed = false;
       }
+
+      b2ContactEdge* paddleHit = paddle->GetContactList();
+
+      if(paddleHit != NULL){
+
+        b2Body* hit = paddleHit->other;
+
+        hit->SetTransform(b2Vec2(rand()%80-40,rand()%10+30),0);
+        hit->SetLinearVelocity(b2Vec2(0,0));
+
+        b2BodyDef temp;
+        temp.position.Set(rand()%88-44,rand()%10+33);
+        temp.type = b2_dynamicBody;
+
+        b2CircleShape circleShape;
+        circleShape.m_p.Set(0,0);
+        circleShape.m_radius = 1.0f;
+        circleFix.shape = &circleShape;
+        circleFix.density = 2;
+
+        b2Body* childe = m_world->CreateBody(&temp);
+        childe->CreateFixture(&circleFix);
+        children++;
+        
+      }
+
+      b2ContactEdge* abyssHit = m_ground_body->GetContactList();
+
+      if(abyssHit != NULL){
+            cs251::callbacks_t::restart_cb(0);
+      }      
+
 
 }

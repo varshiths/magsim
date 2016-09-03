@@ -18,6 +18,7 @@
 
   extern int f1toggler;
   extern int f2toggler;
+  // extern bool restart;
 #ifndef click
 #define click
   b2Vec2 clickPoint;
@@ -158,26 +159,30 @@ namespace cs251
       
       //! Press left to pan left.
     case GLUT_KEY_LEFT:
-      settings.view_center.x -= 0.5f;
-      resize_cb(width, height);
+      // settings.view_center.x -= 0.5f;
+      keyP = GLUT_KEY_LEFT; pressed = true;
+      // std::cout << "< " << char(GLUT_KEY_LEFT) << std::endl;
+      // resize_cb(width, height);
       break;
       
     //! Press right to pan right.
     case GLUT_KEY_RIGHT:
-      settings.view_center.x += 0.5f;
-      resize_cb(width, height);
+      // settings.view_center.x += 0.5f;
+      keyP = GLUT_KEY_RIGHT; pressed = true;
+      // std::cout << "> " << char(GLUT_KEY_RIGHT) << std::endl;
+      // resize_cb(width, height);
       break;
       
     //! Press down to pan down.
     case GLUT_KEY_DOWN:
-      settings.view_center.y -= 0.5f;
-      resize_cb(width, height);
+      // settings.view_center.y -= 0.5f;
+      // resize_cb(width, height);
       break;
       
     //! Press up to pan up.
     case GLUT_KEY_UP:
-      settings.view_center.y += 0.5f;
-      resize_cb(width, height);
+      // settings.view_center.y += 0.5f;
+      // resize_cb(width, height);
       break;
       
     //! Press home to reset the view.
