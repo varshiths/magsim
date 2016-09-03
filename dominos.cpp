@@ -23,10 +23,10 @@
  */
 
 
+#include "cs251_base.hpp"
 #include "render.hpp"
 #include <iostream>
 #include "callbacks.hpp"
-#include "cs251_base.hpp"
 
 #ifdef __APPLE__
   #include <GLUT/glut.h>
@@ -39,11 +39,12 @@ using namespace std;
 
 #include "dominos.hpp"
 
+#include <stdio.h>      /* printf, scanf, puts, NULL */
+#include <stdlib.h>     /* srand, rand */
+#include <time.h>       /* time */
+
 #define DEGTORAD 0.0174532925199432957f
 #define RADTODEG 57.295779513082320876f
-
-extern unsigned char keyP;
-extern bool pressed;
 
 namespace cs251
 {
@@ -59,6 +60,7 @@ namespace cs251
      * \brief pointer to the body ground 
      */ 
     m_world->SetGravity(b2Vec2(0,-4));
+    // m_world->SetContactListener(this);
       
     b2BodyDef boundaryDef;
     boundaryDef.type = b2_staticBody;
@@ -124,7 +126,7 @@ namespace cs251
     
     metalBall = m_world->CreateBody(&metalDef);
     metalBall->CreateFixture(&circleFix);
-    }
+    
           
   }
 
@@ -138,6 +140,8 @@ namespace cs251
 
       b2Body* metal;
       metal = m_world->GetBodyList();
+
+      int children = m_world->GetBodyCount()-6;
       
       for(int i = 0; i < children and metal != NULL; i++){ 
         b2Vec2 metCen = metal->GetWorldCenter();
@@ -148,27 +152,17 @@ namespace cs251
         metal = metal->GetNext();
       }
 
-      if(pressed == true){
-
-        if(keyP == 'f' and paddle->GetWorldCenter().x < +39){
-          paddle->SetTransform(paddle->GetWorldCenter() + b2Vec2(1.5f,0),paddle->GetAngle());
-        }
-        if(keyP == 'd' and paddle->GetWorldCenter().x > -39){
-          paddle->SetTransform(paddle->GetWorldCenter() - b2Vec2(1.5f,0),paddle->GetAngle());
-        }
-
-        pressed = false;
-      }
-
       b2ContactEdge* paddleHit = paddle->GetContactList();
 
       if(paddleHit != NULL){
 
         b2Body* hit = paddleHit->other;
 
+        srand(time(NULL));
         hit->SetTransform(b2Vec2(rand()%80-40,rand()%10+30),0);
         hit->SetLinearVelocity(b2Vec2(0,0));
 
+        srand(time(NULL));
         b2BodyDef temp;
         temp.position.Set(rand()%88-44,rand()%10+33);
         temp.type = b2_dynamicBody;
@@ -179,18 +173,17 @@ namespace cs251
         circleFix.shape = &circleShape;
         circleFix.density = 2;
 
-        b2Body* childe = m_world->CreateBody(&temp);
-        childe->CreateFixture(&circleFix);
-        children++;
+        b2Body* child = m_world->CreateBody(&temp);
+        child->CreateFixture(&circleFix);
         
       }
 
       b2ContactEdge* abyssHit = m_ground_body->GetContactList();
 
       if(abyssHit != NULL){
+            cout << "Score: " << m_world->GetBodyCount()-6 << endl;
             cs251::callbacks_t::restart_cb(0);
       }      
-
 
   }
 
@@ -202,12 +195,29 @@ namespace cs251
     if(key == 't'){
       f1toggler = -1*f1toggler; f2toggler = -1*f2toggler;
     }
+
+    if(key == 'f' and paddle->GetWorldCenter().x < +39){
+      paddle->SetTransform(paddle->GetWorldCenter() + b2Vec2(1.5f,0),paddle->GetAngle());
+    }
+    
+    if(key == 'd' and paddle->GetWorldCenter().x > -39){
+      paddle->SetTransform(paddle->GetWorldCenter() - b2Vec2(1.5f,0),paddle->GetAngle());
+    }
   }
 
-  void dominos_t::keyboard_up(unsigned char key) { B2_NOT_USED(key); }
   void dominos_t::mouse_down(const b2Vec2& p) {
-
+    if( mag1->GetFixtureList()->TestPoint(p) ) f1toggler = -1*f1toggler;
+    if( mag2->GetFixtureList()->TestPoint(p) ) f2toggler = -1*f2toggler;
   }
 
-  sim_t *sim = new sim_t("Magnets", dominos_t::create);
+  // void dominos_t::BeginContact(b2Contact* contact) {
+  //   if(contact->GetFixtureA()->GetBody() == m_ground_body or contact->GetFixtureB()->GetBody() == m_ground_body){
+
+  //   }
+  //   else{
+
+  //   }
+  // }
+
+  sim_t *sim = new sim_t("", dominos_t::create);
 }

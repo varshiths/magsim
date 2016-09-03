@@ -43,8 +43,8 @@ namespace cs251
     dominos_t();
     void step(settings_t*);
     void keyboard(unsigned char key);
-    void keyboard_up(unsigned char key);
     void mouse_down(const b2Vec2& p);
+    // void BeginContact(b2Contact* contact);
     
     static base_sim_t* create()
     {

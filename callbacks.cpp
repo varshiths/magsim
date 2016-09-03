@@ -16,13 +16,6 @@
 
 #include <iostream>
 
-#ifndef press
-#define press
-  unsigned char keyP;
-  bool pressed = false;
-#endif
-  
-
 //! The namespace protects the global variables and other names from
 //! clashes in scope. Read about the use of named and unnamed
 //! namespaces in C++ Figure out where all the datatypes used below
@@ -149,16 +142,14 @@ namespace cs251
       //! Press left to pan left.
     case GLUT_KEY_LEFT:
       // settings.view_center.x -= 0.5f;
-      keyP = GLUT_KEY_LEFT; pressed = true;
-      // std::cout << "< " << char(GLUT_KEY_LEFT) << std::endl;
+      test->keyboard(key);
       // resize_cb(width, height);
       break;
       
     //! Press right to pan right.
     case GLUT_KEY_RIGHT:
       // settings.view_center.x += 0.5f;
-      keyP = GLUT_KEY_RIGHT; pressed = true;
-      // std::cout << "> " << char(GLUT_KEY_RIGHT) << std::endl;
+      test->keyboard(key);
       // resize_cb(width, height);
       break;
       
