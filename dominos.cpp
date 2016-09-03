@@ -23,9 +23,10 @@
  */
 
 
-#include "cs251_base.hpp"
 #include "render.hpp"
 #include <iostream>
+#include "callbacks.hpp"
+#include "cs251_base.hpp"
 
 #ifdef __APPLE__
   #include <GLUT/glut.h>
@@ -41,13 +42,8 @@ using namespace std;
 #define DEGTORAD 0.0174532925199432957f
 #define RADTODEG 57.295779513082320876f
 
-      // void base_sim_t::keyboard(unsigned char key){
-        // switch(key){
-          // case 'a':
-          // std::cout << key << endl;
-          // bodysp->SetLinearVelocity(b2Vec2(0,-1));
-        // }
-      // }
+extern unsigned char keyP;
+extern bool pressed;
 
 namespace cs251
 {
@@ -55,100 +51,162 @@ namespace cs251
    * This is the documentation block for the constructor.
    */ 
   
-  dominos_t::dominos_t()
+  dominos_t::dominos_t():
+  f1toggler(-1), f2toggler(-1)
   {
     //Ground
     /*! \var b1 
      * \brief pointer to the body ground 
      */ 
-
     m_world->SetGravity(b2Vec2(0,-4));
-
-
-
-    b2Body* b1;  
-    {
       
-      b2BodyDef boundaryDef;
-      boundaryDef.type = b2_staticBody;
-      boundaryDef.position = b2Vec2(0,0);
-      b2Body* boundary = m_world->CreateBody(&boundaryDef);
-      
-      m_ground_body = m_world->CreateBody(&boundaryDef);
+    b2BodyDef boundaryDef;
+    boundaryDef.type = b2_staticBody;
+    boundaryDef.position = b2Vec2(0,0);
+    b2Body* boundary = m_world->CreateBody(&boundaryDef);
+    
+    m_ground_body = m_world->CreateBody(&boundaryDef);
 
-      b2EdgeShape line;
-      b2FixtureDef lineDefFix;
-      lineDefFix.restitution = 0.7;
-      lineDefFix.shape = &line;
+    b2EdgeShape line;
+    b2FixtureDef lineDefFix;
+    lineDefFix.restitution = 0.7;
+    lineDefFix.shape = &line;
 
-      line.Set(b2Vec2(-44.0f, -4.0f), b2Vec2(44.0f, -4.0f));
-      m_ground_body->CreateFixture(&lineDefFix);
+    line.Set(b2Vec2(-44.0f, -4.0f), b2Vec2(44.0f, -4.0f));
+    m_ground_body->CreateFixture(&lineDefFix); // ground
 
-      // lineDefFix.shape = &line;
-      line.Set(b2Vec2(-44.0f, 44.0f), b2Vec2(44.0f, 44.0f));
-      boundary->CreateFixture(&lineDefFix);
-      
-      // lineDefFix.shape = &line;
-      line.Set(b2Vec2(-44.0f, -4.0f), b2Vec2(-44.0f, 44.0f));
-      boundary->CreateFixture(&lineDefFix);
+    line.Set(b2Vec2(-44.0f, 44.0f), b2Vec2(44.0f, 44.0f));
+    boundary->CreateFixture(&lineDefFix);
+    
+    line.Set(b2Vec2(-44.0f, -4.0f), b2Vec2(-44.0f, 44.0f));
+    boundary->CreateFixture(&lineDefFix);
 
-      // lineDefFix.shape = &line;
-      line.Set(b2Vec2(44.0f, -4.0f), b2Vec2(44.0f, 44.0f));
-      boundary->CreateFixture(&lineDefFix);
-     
-      b2EdgeShape shape; 
-      shape.Set(b2Vec2(-5.0f, 0.0f), b2Vec2(5.0f, 0.0f));
-      b2BodyDef bd; 
-      b1 = m_world->CreateBody(&bd); 
-      b1->CreateFixture(&shape, 0.0f);
-    }
+    line.Set(b2Vec2(44.0f, -4.0f), b2Vec2(44.0f, 44.0f));
+    boundary->CreateFixture(&lineDefFix);
+   
+    b2EdgeShape shape; 
+    shape.Set(b2Vec2(-5.0f, 0.0f), b2Vec2(5.0f, 0.0f));
+    b2BodyDef bd; 
+    paddle = m_world->CreateBody(&bd); 
+    paddle->CreateFixture(&shape, 0.0f);
 
-    {
-      // shape definition
-      b2CircleShape circleShape;
-      circleShape.m_p.Set(0,0);
-      circleShape.m_radius = 1.5f;
+    // shape definition
+    b2CircleShape circleShape;
+    circleShape.m_p.Set(0,0);
+    circleShape.m_radius = 1.5f;
 
-      // b2FixtureDef circleFix;
+    b2BodyDef magnet1Def;
+    magnet1Def.type = b2_staticBody;
+    magnet1Def.position.Set(-15,20);
 
-      // metallic->SetUserData(metallic);
+    b2BodyDef magnet2Def;
+    magnet2Def.type = b2_staticBody;
+    magnet2Def.position.Set(15,20);      
 
-      b2BodyDef magnet1Def;
-      magnet1Def.type = b2_staticBody;
-      magnet1Def.position.Set(-15,20);
+    circleFix.shape = &circleShape;
+    circleFix.restitution = 0.8;
 
-      b2BodyDef magnet2Def;
-      magnet2Def.type = b2_staticBody;
-      magnet2Def.position.Set(15,20);      
+    circleFix.density = 1.1f;
+    mag1 = m_world->CreateBody(&magnet1Def);
+    mag1->CreateFixture(&circleFix);
 
-      // namer = "agn";
-      circleFix.shape = &circleShape;
-      circleFix.restitution = 0.8;
+    circleFix.density = 2.1f;
+    mag2 = m_world->CreateBody(&magnet2Def);
+    mag2->CreateFixture(&circleFix);      
 
-      circleFix.density = 1.1f;
-      b2Body* magnet1 = m_world->CreateBody(&magnet1Def);
-      magnet1->CreateFixture(&circleFix);
+    circleShape.m_radius = 1.0f;
+    circleFix.shape = &circleShape;
+    circleFix.density = 2;
 
-      circleFix.density = 2.1f;
-      b2Body* magnet2 = m_world->CreateBody(&magnet2Def);
-      magnet2->CreateFixture(&circleFix);      
-
-
-      circleShape.m_radius = 1.0f;
-      circleFix.shape = &circleShape;
-      circleFix.density = 2;
-
-      b2BodyDef metalDef;
-      metalDef.type = b2_dynamicBody;
-      metalDef.position.Set(5,30);
-      b2Body* metallic = m_world->CreateBody(&metalDef);
-      metallic->CreateFixture(&circleFix);
-
-      // metallic->SetUserData(&circleFix);
-
-
+    b2BodyDef metalDef;
+    metalDef.type = b2_dynamicBody;
+    metalDef.position.Set(5,30);
+    
+    metalBall = m_world->CreateBody(&metalDef);
+    metalBall->CreateFixture(&circleFix);
     }
           
+  }
+
+  void dominos_t::step(settings_t* settings)
+  {
+
+      base_sim_t::step(settings);
+
+      b2Vec2 mag1Cen = mag1->GetWorldCenter();
+      b2Vec2 mag2Cen = mag2->GetWorldCenter();
+
+      b2Body* metal;
+      metal = m_world->GetBodyList();
+      
+      for(int i = 0; i < children and metal != NULL; i++){ 
+        b2Vec2 metCen = metal->GetWorldCenter();
+  
+        b2Vec2 force1 = f1toggler*(75.0f/(metCen-mag1Cen).LengthSquared()*(metCen-mag1Cen).Length())*(metCen-mag1Cen);
+        b2Vec2 force2 = f2toggler*(75.0f/(metCen-mag2Cen).LengthSquared()*(metCen-mag2Cen).Length())*(metCen-mag2Cen);
+        metal->ApplyForceToCenter(force1+force2,true);
+        metal = metal->GetNext();
+      }
+
+      if(pressed == true){
+
+        if(keyP == 'f' and paddle->GetWorldCenter().x < +39){
+          paddle->SetTransform(paddle->GetWorldCenter() + b2Vec2(1.5f,0),paddle->GetAngle());
+        }
+        if(keyP == 'd' and paddle->GetWorldCenter().x > -39){
+          paddle->SetTransform(paddle->GetWorldCenter() - b2Vec2(1.5f,0),paddle->GetAngle());
+        }
+
+        pressed = false;
+      }
+
+      b2ContactEdge* paddleHit = paddle->GetContactList();
+
+      if(paddleHit != NULL){
+
+        b2Body* hit = paddleHit->other;
+
+        hit->SetTransform(b2Vec2(rand()%80-40,rand()%10+30),0);
+        hit->SetLinearVelocity(b2Vec2(0,0));
+
+        b2BodyDef temp;
+        temp.position.Set(rand()%88-44,rand()%10+33);
+        temp.type = b2_dynamicBody;
+
+        b2CircleShape circleShape;
+        circleShape.m_p.Set(0,0);
+        circleShape.m_radius = 1.0f;
+        circleFix.shape = &circleShape;
+        circleFix.density = 2;
+
+        b2Body* childe = m_world->CreateBody(&temp);
+        childe->CreateFixture(&circleFix);
+        children++;
+        
+      }
+
+      b2ContactEdge* abyssHit = m_ground_body->GetContactList();
+
+      if(abyssHit != NULL){
+            cs251::callbacks_t::restart_cb(0);
+      }      
+
+
+  }
+
+  void dominos_t::keyboard(unsigned char key) {
+    if(key == 'q'){
+      f1toggler = -1; f2toggler = -1;
+    }
+
+    if(key == 't'){
+      f1toggler = -1*f1toggler; f2toggler = -1*f2toggler;
+    }
+  }
+
+  void dominos_t::keyboard_up(unsigned char key) { B2_NOT_USED(key); }
+  void dominos_t::mouse_down(const b2Vec2& p) {
+
   }
 
   sim_t *sim = new sim_t("Magnets", dominos_t::create);

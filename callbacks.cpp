@@ -16,14 +16,6 @@
 
 #include <iostream>
 
-  extern int f1toggler;
-  extern int f2toggler;
-  // extern bool restart;
-#ifndef click
-#define click
-  b2Vec2 clickPoint;
-  bool clicked = false;
-#endif
 #ifndef press
 #define press
   unsigned char keyP;
@@ -106,9 +98,6 @@ namespace cs251
     B2_NOT_USED(x);
     B2_NOT_USED(y);
 
-    keyP = key;
-    pressed = true;
-    
     switch (key)
     {
     case 27:
@@ -228,9 +217,6 @@ namespace cs251
   
   if (state == GLUT_UP)
     {
-
-      clickPoint = convert_screen_to_world(x,y);
-      clicked = true;
 
       test->mouse_up(p);
     }

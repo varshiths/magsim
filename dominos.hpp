@@ -25,6 +25,8 @@
 #ifndef _DOMINOS_HPP_
 #define _DOMINOS_HPP_
 
+// #include ""
+
 namespace cs251
 {
   //! This is the class that sets up the Box2D simulation world
@@ -32,8 +34,17 @@ namespace cs251
   class dominos_t : public base_sim_t
   {
   public:
+
+    b2Body *mag1, *mag2, *metalBall, *paddle;
+    int f1toggler;
+    int f2toggler;
+    b2FixtureDef circleFix;
     
     dominos_t();
+    void step(settings_t*);
+    void keyboard(unsigned char key);
+    void keyboard_up(unsigned char key);
+    void mouse_down(const b2Vec2& p);
     
     static base_sim_t* create()
     {
